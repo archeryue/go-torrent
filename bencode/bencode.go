@@ -9,9 +9,56 @@ import (
 var (
 	ErrNum = errors.New("expect num")
 	ErrCol = errors.New("expect colon")
-	ErrEpI = errors.New("expect i")
-	ErrEpE = errors.New("expect e")
+	ErrEpI = errors.New("expect char i")
+	ErrEpL = errors.New("expect char l")
+	ErrEpD = errors.New("expect char d")
+	ErrEpE = errors.New("expect char e")
+	ErrTyp = errors.New("wrong type")
 )
+
+type BType uint8
+
+const (
+	BSTR  BType = 0x01
+	BINT  BType = 0x02
+	BLIST BType = 0x03
+	BDICT BType = 0x04
+)
+
+type BValue interface{}
+
+type BObject struct {
+	type_ BType
+	val_  BValue
+}
+
+func (o *BObject) String() (string, error) {
+	if o.type_ != BSTR {
+		return "", ErrTyp
+	}
+	return o.val_.(string), nil
+}
+
+func (o *BObject) Int() (int, error) {
+	if o.type_ != BINT {
+		return 0, ErrTyp
+	}
+	return o.val_.(int), nil
+}
+
+func (o *BObject) List() ([]*BObject, error) {
+	if o.type_ != BLIST {
+		return nil, ErrTyp
+	}
+	return o.val_.([]*BObject), nil
+}
+
+func (o *BObject) Dict() (map[string]*BObject, error) {
+	if o.type_ != BDICT {
+		return nil, ErrTyp
+	}
+	return o.val_.(map[string]*BObject), nil
+}
 
 func checkNum(data byte) bool {
 	return data >= '0' && data <= '9'
