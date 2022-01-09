@@ -38,14 +38,14 @@ func readDecimal(r *bufio.Reader) (val int, len int) {
 	}
 }
 
-func writeDecimal(w io.Writer, val int) (len int) {
+func writeDecimal(w *bufio.Writer, val int) (len int) {
 	if val == 0 {
-		w.Write([]byte{'0'})
+		w.WriteByte('0')
 		len++
 		return
 	}
 	if val < 0 {
-		w.Write([]byte{'-'})
+		w.WriteByte('-')
 		len++
 		val *= -1
 	}
@@ -60,7 +60,7 @@ func writeDecimal(w io.Writer, val int) (len int) {
 	}
 	for {
 		num := byte(val / dividend)
-		w.Write([]byte{'0' + num})
+		w.WriteByte('0' + num)
 		len++
 		if dividend == 1 {
 			return
@@ -72,11 +72,17 @@ func writeDecimal(w io.Writer, val int) (len int) {
 
 func EncodeString(w io.Writer, val string) int {
 	strLen := len(val)
-	wLen := writeDecimal(w, strLen)
-	w.Write([]byte{':'})
+	bw := bufio.NewWriter(w)
+	wLen := writeDecimal(bw, strLen)
+	bw.WriteByte(':')
 	wLen++
-	w.Write([]byte(val))
+	bw.WriteString(val)
 	wLen += strLen
+
+	err := bw.Flush()
+	if err != nil {
+		return 0
+	}
 	return wLen
 }
 
@@ -96,13 +102,19 @@ func DecodeString(r io.Reader) (val string, err error) {
 }
 
 func EncodeInt(w io.Writer, val int) int {
+	bw := bufio.NewWriter(w)
 	wLen := 0
-	w.Write([]byte{'i'})
+	bw.WriteByte('i')
 	wLen++
-	nLen := writeDecimal(w, val)
+	nLen := writeDecimal(bw, val)
 	wLen += nLen
-	w.Write([]byte{'e'})
+	bw.WriteByte('e')
 	wLen++
+
+	err := bw.Flush()
+	if err != nil {
+		return 0
+	}
 	return wLen
 }
 
