@@ -1,6 +1,7 @@
 package bencode
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,31 +9,42 @@ import (
 
 func TestString(t *testing.T) {
 	val := "abc"
-	buf := make([]byte, 10, 10)
+	buf := new(bytes.Buffer)
 	wLen := EncodeString(buf, val)
-	str, _ := DecodeString(buf[:wLen+1])
+	assert.Equal(t, 5, wLen)
+	str, _ := DecodeString(buf)
 	assert.Equal(t, val, str)
 
 	val = ""
 	for i := 0; i < 20; i++ {
 		val += string(byte('a' + i))
 	}
-	buf = make([]byte, 100, 100)
+	buf.Reset()
 	wLen = EncodeString(buf, val)
-	str, _ = DecodeString(buf[:wLen+1])
+	assert.Equal(t, 23, wLen)
+	str, _ = DecodeString(buf)
 	assert.Equal(t, val, str)
 }
 
 func TestInt(t *testing.T) {
 	val := 999
-	buf := make([]byte, 10, 10)
+	buf := new(bytes.Buffer)
 	wLen := EncodeInt(buf, val)
-	iv, _ := DecodeInt(buf[:wLen+1])
+	assert.Equal(t, 5, wLen)
+	iv, _ := DecodeInt(buf)
+	assert.Equal(t, val, iv)
+
+	val = 0
+	buf.Reset()
+	wLen = EncodeInt(buf, val)
+	assert.Equal(t, 3, wLen)
+	iv, _ = DecodeInt(buf)
 	assert.Equal(t, val, iv)
 
 	val = -99
-	buf = make([]byte, 10, 10)
+	buf.Reset()
 	wLen = EncodeInt(buf, val)
-	iv, _ = DecodeInt(buf[:wLen+1])
+	assert.Equal(t, 5, wLen)
+	iv, _ = DecodeInt(buf)
 	assert.Equal(t, val, iv)
 }

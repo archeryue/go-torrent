@@ -1,6 +1,10 @@
 package bencode
 
-import "errors"
+import (
+	"bufio"
+	"errors"
+	"io"
+)
 
 var (
 	ErrNum = errors.New("expect num")
@@ -13,29 +17,35 @@ func checkNum(data byte) bool {
 	return data >= '0' && data <= '9'
 }
 
-func getDecimal(data []byte) (val int, len int) {
+func readDecimal(r *bufio.Reader) (val int, len int) {
 	sign := 1
-	if data[0] == '-' {
+	b, _ := r.ReadByte()
+	len++
+	if b == '-' {
 		sign = -1
+		b, _ = r.ReadByte()
 		len++
 	}
 	for {
-		if !checkNum(data[len]) {
+		if !checkNum(b) {
+			r.UnreadByte()
+			len--
 			return sign * val, len
 		}
-		val = val*10 + int(data[len]-'0')
+		val = val*10 + int(b-'0')
+		b, _ = r.ReadByte()
 		len++
 	}
 }
 
-func setDecimal(buf []byte, val int) (len int) {
+func writeDecimal(w io.Writer, val int) (len int) {
 	if val == 0 {
-		buf[len] = '0'
+		w.Write([]byte{'0'})
 		len++
 		return
 	}
 	if val < 0 {
-		buf[len] = '-'
+		w.Write([]byte{'-'})
 		len++
 		val *= -1
 	}
@@ -50,7 +60,7 @@ func setDecimal(buf []byte, val int) (len int) {
 	}
 	for {
 		num := byte(val / dividend)
-		buf[len] = '0' + num
+		w.Write([]byte{'0' + num})
 		len++
 		if dividend == 1 {
 			return
@@ -60,45 +70,51 @@ func setDecimal(buf []byte, val int) (len int) {
 	}
 }
 
-func EncodeString(buf []byte, val string) int {
+func EncodeString(w io.Writer, val string) int {
 	strLen := len(val)
-	wLen := setDecimal(buf, strLen)
-	buf[wLen] = ':'
+	wLen := writeDecimal(w, strLen)
+	w.Write([]byte{':'})
 	wLen++
-	copy(buf[wLen:], []byte(val))
+	w.Write([]byte(val))
 	wLen += strLen
 	return wLen
 }
 
-func DecodeString(src []byte) (val string, err error) {
-	num, len := getDecimal(src)
+func DecodeString(r io.Reader) (val string, err error) {
+	br := bufio.NewReader(r)
+	num, len := readDecimal(br)
 	if len == 0 {
 		return val, ErrNum
 	}
-	if src[len] != ':' {
+	b, err := br.ReadByte()
+	if b != ':' {
 		return val, ErrCol
 	}
-	val = string(src[len+1 : len+1+num])
+	buf, err := br.Peek(num)
+	val = string(buf)
 	return
 }
 
-func EncodeInt(buf []byte, val int) int {
+func EncodeInt(w io.Writer, val int) int {
 	wLen := 0
-	buf[0] = 'i'
+	w.Write([]byte{'i'})
 	wLen++
-	nLen := setDecimal(buf[wLen:], val)
+	nLen := writeDecimal(w, val)
 	wLen += nLen
-	buf[wLen] = 'e'
+	w.Write([]byte{'e'})
 	wLen++
 	return wLen
 }
 
-func DecodeInt(src []byte) (val int, err error) {
-	if src[0] != 'i' {
+func DecodeInt(r io.Reader) (val int, err error) {
+	br := bufio.NewReader(r)
+	b, err := br.ReadByte()
+	if b != 'i' {
 		return val, ErrEpI
 	}
-	val, len := getDecimal(src[1:])
-	if src[len+1] != 'e' {
+	val, _ = readDecimal(br)
+	b, err = br.ReadByte()
+	if b != 'e' {
 		return val, ErrEpE
 	}
 	return
