@@ -30,11 +30,13 @@ func getDecimal(data []byte) (val int, len int) {
 
 func setDecimal(buf []byte, val int) (len int) {
 	if val == 0 {
-		buf[len] = '0'; len++
+		buf[len] = '0'
+		len++
 		return
 	}
 	if val < 0 {
-		buf[len] = '-'; len++
+		buf[len] = '-'
+		len++
 		val *= -1
 	}
 
@@ -48,15 +50,17 @@ func setDecimal(buf []byte, val int) (len int) {
 	}
 	for {
 		num := byte(val / dividend)
-		buf[len] = '0' + num; len++
+		buf[len] = '0' + num
+		len++
 		if dividend == 1 {
 			return
 		}
-		val %= dividend; dividend /= 10
+		val %= dividend
+		dividend /= 10
 	}
 }
 
-func WriteString(buf []byte, val string) int {
+func EncodeString(buf []byte, val string) int {
 	strLen := len(val)
 	wLen := setDecimal(buf, strLen)
 	buf[wLen] = ':'
@@ -66,7 +70,7 @@ func WriteString(buf []byte, val string) int {
 	return wLen
 }
 
-func ParseString(src []byte) (val string, err error) {
+func DecodeString(src []byte) (val string, err error) {
 	num, len := getDecimal(src)
 	if len == 0 {
 		return val, ErrNum
@@ -78,7 +82,7 @@ func ParseString(src []byte) (val string, err error) {
 	return
 }
 
-func WriteInt(buf []byte, val int) int {
+func EncodeInt(buf []byte, val int) int {
 	wLen := 0
 	buf[0] = 'i'
 	wLen++
@@ -89,7 +93,7 @@ func WriteInt(buf []byte, val int) int {
 	return wLen
 }
 
-func ParseInt(src []byte) (val int, err error) {
+func DecodeInt(src []byte) (val int, err error) {
 	if src[0] != 'i' {
 		return val, ErrEpI
 	}
