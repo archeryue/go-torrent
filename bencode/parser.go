@@ -10,16 +10,21 @@ var (
 )
 
 func checkNum(data byte) bool {
-	return data >= '0' && data <= '9';
+	return data >= '0' && data <= '9'
 }
 
 func getDecimal(data []byte) (val int, len int) {
+	sign := 1
+	if data[0] == '-' {
+		sign = -1
+		len++
+	}
 	for {
 		if !checkNum(data[len]) {
-			return
+			return sign * val, len
 		}
-		val = val * 10 + int(data[len] - '0')
-		len++;
+		val = val*10 + int(data[len]-'0')
+		len++
 	}
 }
 
@@ -28,9 +33,14 @@ func setDecimal(buf []byte, val int) (len int) {
 		buf[len] = '0'; len++
 		return
 	}
-	dividend := 1;
+	if val < 0 {
+		buf[len] = '-'; len++
+		val *= -1
+	}
+
+	dividend := 1
 	for {
-		if (dividend > val) {
+		if dividend > val {
 			dividend /= 10
 			break
 		}
@@ -39,17 +49,18 @@ func setDecimal(buf []byte, val int) (len int) {
 	for {
 		num := byte(val / dividend)
 		buf[len] = '0' + num; len++
-		if (dividend == 1) {
+		if dividend == 1 {
 			return
 		}
-		val /= 10; dividend /= 10
+		val %= dividend; dividend /= 10
 	}
 }
 
 func WriteString(buf []byte, val string) int {
 	strLen := len(val)
 	wLen := setDecimal(buf, strLen)
-	buf[wLen] = ':'; wLen++
+	buf[wLen] = ':'
+	wLen++
 	copy(buf[wLen:], []byte(val))
 	wLen += strLen
 	return wLen
@@ -57,22 +68,24 @@ func WriteString(buf []byte, val string) int {
 
 func ParseString(src []byte) (val string, err error) {
 	num, len := getDecimal(src)
-	if (len == 0) {
+	if len == 0 {
 		return val, ErrNum
 	}
-	if (src[len] != ':') {
+	if src[len] != ':' {
 		return val, ErrCol
 	}
-	val = string(src[len+1:len+1+num])
+	val = string(src[len+1 : len+1+num])
 	return
-} 
+}
 
 func WriteInt(buf []byte, val int) int {
 	wLen := 0
-	buf[0] = 'i'; wLen++
+	buf[0] = 'i'
+	wLen++
 	nLen := setDecimal(buf[wLen:], val)
 	wLen += nLen
-	buf[wLen] = 'e'; wLen++
+	buf[wLen] = 'e'
+	wLen++
 	return wLen
 }
 

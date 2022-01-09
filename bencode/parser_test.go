@@ -12,6 +12,15 @@ func TestString(t *testing.T) {
 	wLen := WriteString(buf, val)
 	str, _ := ParseString(buf[:wLen+1])
 	assert.Equal(t, val, str)
+
+	val = ""
+	for i := 0; i < 20; i++ {
+		val += string(byte('a' + i))
+	}
+	buf = make([]byte, 100, 100)
+	wLen = WriteString(buf, val)
+	str, _ = ParseString(buf[:wLen+1])
+	assert.Equal(t, val, str)
 }
 
 func TestInt(t *testing.T) {
@@ -19,5 +28,11 @@ func TestInt(t *testing.T) {
 	buf := make([]byte, 10, 10)
 	wLen := WriteInt(buf, val)
 	iv, _ := ParseInt(buf[:wLen+1])
+	assert.Equal(t, val, iv)
+
+	val = -99
+	buf = make([]byte, 10, 10)
+	wLen = WriteInt(buf, val)
+	iv, _ = ParseInt(buf[:wLen+1])
 	assert.Equal(t, val, iv)
 }
