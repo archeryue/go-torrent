@@ -10,10 +10,9 @@ var (
 	ErrNum = errors.New("expect num")
 	ErrCol = errors.New("expect colon")
 	ErrEpI = errors.New("expect char i")
-	ErrEpL = errors.New("expect char l")
-	ErrEpD = errors.New("expect char d")
 	ErrEpE = errors.New("expect char e")
 	ErrTyp = errors.New("wrong type")
+	ErrIvd = errors.New("invalid bencode")
 )
 
 type BType uint8
