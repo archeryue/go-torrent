@@ -133,7 +133,10 @@ func EncodeString(w io.Writer, val string) int {
 }
 
 func DecodeString(r io.Reader) (val string, err error) {
-	br := bufio.NewReader(r)
+	br, ok := r.(*bufio.Reader)
+	if !ok {
+		br = bufio.NewReader(r)
+	}
 	num, len := readDecimal(br)
 	if len == 0 {
 		return val, ErrNum
@@ -165,7 +168,10 @@ func EncodeInt(w io.Writer, val int) int {
 }
 
 func DecodeInt(r io.Reader) (val int, err error) {
-	br := bufio.NewReader(r)
+	br, ok := r.(*bufio.Reader)
+	if !ok {
+		br = bufio.NewReader(r)
+	}
 	b, err := br.ReadByte()
 	if b != 'i' {
 		return val, ErrEpI
