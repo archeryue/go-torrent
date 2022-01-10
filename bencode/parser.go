@@ -11,39 +11,36 @@ func Parse(r io.Reader) (*BObject, error) {
 		br = bufio.NewReader(r)
 	}
 	//recursive descent parsing
-	b, err := br.ReadByte()
+	b, err := br.Peek(1)
 	if err != nil {
 		return nil, err
 	}
-	br.UnreadByte()
 	var ret BObject
 	switch {
-	case b >= '0' && b <= '9':
+	case b[0] >= '0' && b[0] <= '9':
+		// parse string
 		val, err := DecodeString(br)
 		if err != nil {
 			return nil, err
 		}
 		ret.type_ = BSTR
 		ret.val_ = val
-	case b == 'i':
+	case b[0] == 'i':
+		// parse int
 		val, err := DecodeInt(br)
 		if err != nil {
 			return nil, err
 		}
 		ret.type_ = BINT
 		ret.val_ = val
-	case b == 'l':
+	case b[0] == 'l':
+		// parse list
 		br.ReadByte()
 		var list []*BObject
 		for {
-			first, err := br.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-			if first == 'e' {
+			if p, _ := br.Peek(1); p[0] == 'e' {
 				break
 			}
-			br.UnreadByte()
 			elem, err := Parse(br)
 			if err != nil {
 				return nil, err
@@ -52,18 +49,14 @@ func Parse(r io.Reader) (*BObject, error) {
 		}
 		ret.type_ = BLIST
 		ret.val_ = list
-	case b == 'd':
+	case b[0] == 'd':
+		// parse map
 		br.ReadByte()
 		dict := make(map[string]*BObject)
 		for {
-			first, err := br.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-			if first == 'e' {
+			if p, _ := br.Peek(1); p[0] == 'e' {
 				break
 			}
-			br.UnreadByte()
 			key, err := DecodeString(br)
 			if err != nil {
 				return nil, err
