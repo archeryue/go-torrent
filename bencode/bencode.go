@@ -145,7 +145,8 @@ func DecodeString(r io.Reader) (val string, err error) {
 	if b != ':' {
 		return val, ErrCol
 	}
-	buf, err := br.Peek(num)
+	buf := make([]byte, num)
+	_, err = io.ReadAtLeast(br, buf, num)
 	val = string(buf)
 	return
 }

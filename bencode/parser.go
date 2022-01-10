@@ -76,6 +76,8 @@ func Parse(r io.Reader) (*BObject, error) {
 		}
 		ret.type_ = BDICT
 		ret.val_ = dict
+	default:
+		return nil, ErrIvd
 	}
 	return &ret, nil
 }
