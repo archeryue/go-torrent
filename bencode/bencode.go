@@ -31,7 +31,7 @@ type BObject struct {
 	val_  BValue
 }
 
-func (o *BObject) String() (string, error) {
+func (o *BObject) Str() (string, error) {
 	if o.type_ != BSTR {
 		return "", ErrTyp
 	}

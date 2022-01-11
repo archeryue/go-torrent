@@ -9,7 +9,7 @@ import (
 
 func objAssertStr(t *testing.T, expect string, o *BObject) {
 	assert.Equal(t, BSTR, o.type_)
-	str, err := o.String()
+	str, err := o.Str()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, expect, str)
 }
