@@ -59,6 +59,41 @@ func (o *BObject) Dict() (map[string]*BObject, error) {
 	return o.val_.(map[string]*BObject), nil
 }
 
+func (o *BObject) Bencode(w io.Writer) int {
+	bw, ok := w.(*bufio.Writer)
+	if !ok {
+		bw = bufio.NewWriter(w)
+	}
+	wLen := 0
+	switch o.type_ {
+	case BSTR:
+		str, _ := o.Str()
+		wLen += EncodeString(bw, str)
+	case BINT:
+		val, _ := o.Int()
+		wLen += EncodeInt(bw, val)
+	case BLIST:
+		bw.WriteByte('l')
+		list, _ := o.List()
+		for _, elem := range list {
+			wLen += elem.Bencode(bw)
+		}
+		bw.WriteByte('e')
+		wLen += 2
+	case BDICT:
+		bw.WriteByte('d')
+		dict, _ := o.Dict()
+		for k, v := range dict {
+			wLen += EncodeString(bw, k)
+			wLen += v.Bencode(bw)
+		}
+		bw.WriteByte('e')
+		wLen += 2
+	}
+	bw.Flush()
+	return wLen
+}
+
 func checkNum(data byte) bool {
 	return data >= '0' && data <= '9'
 }
