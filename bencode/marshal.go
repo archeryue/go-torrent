@@ -21,10 +21,14 @@ func Unmarshal(r io.Reader, s interface{}) error {
 		return errors.New("dest must be pointer")
 	}
 	p = p.Elem()
-	return unmarshal(p, dict)
+	return unmarshalDict(p, dict)
 }
 
-func unmarshal(p reflect.Value, dict map[string]*BObject) error {
+func unmarshalList(p reflect.Value, list []*BObject) error {
+	return nil
+}
+
+func unmarshalDict(p reflect.Value, dict map[string]*BObject) error {
 	for i, n := 0, p.NumField(); i < n; i++ {
 		fv := p.Field(i)
 		if !fv.CanSet() {
@@ -53,12 +57,21 @@ func unmarshal(p reflect.Value, dict map[string]*BObject) error {
 			val, _ := fo.Int()
 			fv.SetInt(int64(val))
 		case BLIST:
-			if ft.Type.Kind() != reflect.Ptr {
+			if ft.Type.Kind() != reflect.Slice {
 				break
 			}
-			//TODO: handle list
+			val := reflect.New(ft.Type)
+			list, _ := fo.List()
+			unmarshalList(val, list)
+			fv.Set(val)
 		case BDICT:
-			//TODO: handle dict
+			if ft.Type.Kind() != reflect.Struct {
+				break
+			}
+			val := reflect.New(ft.Type)
+			dict, _ := fo.Dict()
+			unmarshalDict(val, dict)
+			fv.Set(val)
 		}
 	}
 	return nil
