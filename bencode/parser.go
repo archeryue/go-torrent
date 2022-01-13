@@ -39,6 +39,7 @@ func Parse(r io.Reader) (*BObject, error) {
 		var list []*BObject
 		for {
 			if p, _ := br.Peek(1); p[0] == 'e' {
+				br.ReadByte()
 				break
 			}
 			elem, err := Parse(br)
@@ -55,6 +56,7 @@ func Parse(r io.Reader) (*BObject, error) {
 		dict := make(map[string]*BObject)
 		for {
 			if p, _ := br.Peek(1); p[0] == 'e' {
+				br.ReadByte()
 				break
 			}
 			key, err := DecodeString(br)

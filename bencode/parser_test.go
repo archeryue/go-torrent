@@ -79,3 +79,16 @@ func TestParseMap(t *testing.T) {
 	out := bytes.NewBufferString("")
 	assert.Equal(t, len(in), o.Bencode(out))
 }
+
+func TestParseComMap(t *testing.T) {
+	var o *BObject
+	var dict map[string]*BObject
+	in := "d4:userd4:name6:archer3:agei29ee5:valueli80ei85ei90eee"
+	buf := bytes.NewBufferString(in)
+	o, _ = Parse(buf)
+	assert.Equal(t, BDICT, o.type_)
+	dict, err := o.Dict()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, BDICT, dict["user"].type_)
+	assert.Equal(t, BLIST, dict["value"].type_)
+}

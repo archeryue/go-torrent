@@ -13,13 +13,24 @@ func Unmarshal(r io.Reader, s interface{}) error {
 		return err
 	}
 	p := reflect.ValueOf(s)
+	if p.Kind() != reflect.Ptr {
+		return errors.New("dest must be a pointer")
+	}
 	switch o.type_ {
 	case BLIST:
 		list, _ := o.List()
-		unmarshalList(p, list)
+		l := reflect.MakeSlice(p.Elem().Type(), len(list), len(list))
+		p.Elem().Set(l)
+		err = unmarshalList(p, list)
+		if err != nil {
+			return err
+		}
 	case BDICT:
 		dict, _ := o.Dict()
-		unmarshalDict(p, dict)
+		err = unmarshalDict(p, dict)
+		if err != nil {
+			return err
+		}
 	default:
 		return errors.New("src code must be struct or slice")
 	}
@@ -31,58 +42,60 @@ func unmarshalList(p reflect.Value, list []*BObject) error {
 	if p.Kind() != reflect.Ptr || p.Elem().Type().Kind() != reflect.Slice {
 		return errors.New("dest must be pointer to slice")
 	}
-	p = p.Elem()
+	vl := p.Elem()
 	if len(list) == 0 {
 		return nil
 	}
 	switch list[0].type_ {
 	case BSTR:
-		for _, o := range list {
+		for i, o := range list {
 			val, err := o.Str()
 			if err != nil {
 				return err
 			}
-			p = reflect.Append(p, reflect.ValueOf(val))
+			vl.Index(i).SetString(val)
 		}
 	case BINT:
-		for _, o := range list {
+		for i, o := range list {
 			val, err := o.Int()
 			if err != nil {
 				return err
 			}
-			p = reflect.Append(p, reflect.ValueOf(val))
+			vl.Index(i).SetInt(int64(val))
 		}
 	case BLIST:
-		for _, o := range list {
+		for i, o := range list {
 			val, err := o.List()
 			if err != nil {
 				return err
 			}
-			if p.Type().Elem().Kind() != reflect.Slice {
+			if vl.Type().Elem().Kind() != reflect.Slice {
 				return ErrTyp
 			}
-			lp := reflect.New(p.Type().Elem())
+			lp := reflect.New(vl.Type().Elem())
+			ll := reflect.MakeSlice(vl.Type().Elem(), len(val), len(val))
+			lp.Elem().Set(ll)
 			err = unmarshalList(lp, val)
 			if err != nil {
 				return err
 			}
-			p = reflect.Append(p, lp.Elem())
+			vl.Index(i).Set(lp.Elem())
 		}
 	case BDICT:
-		for _, o := range list {
+		for i, o := range list {
 			val, err := o.Dict()
 			if err != nil {
 				return err
 			}
-			if p.Type().Elem().Kind() != reflect.Struct {
+			if vl.Type().Elem().Kind() != reflect.Struct {
 				return ErrTyp
 			}
-			dp := reflect.New(p.Type().Elem())
+			dp := reflect.New(vl.Type().Elem())
 			err = unmarshalDict(dp, val)
 			if err != nil {
 				return err
 			}
-			p = reflect.Append(p, dp.Elem())
+			vl.Index(i).Set(dp.Elem())
 		}
 	}
 	return nil
@@ -125,9 +138,14 @@ func unmarshalDict(p reflect.Value, dict map[string]*BObject) error {
 			if ft.Type.Kind() != reflect.Slice {
 				break
 			}
-			valp := reflect.New(ft.Type)
 			list, _ := fo.List()
-			unmarshalList(valp, list)
+			valp := reflect.New(ft.Type)
+			vall := reflect.MakeSlice(ft.Type, len(list), len(list))
+			valp.Elem().Set(vall)
+			err := unmarshalList(valp, list)
+			if err != nil {
+				break
+			}
 			fv.Set(valp.Elem())
 		case BDICT:
 			if ft.Type.Kind() != reflect.Struct {
@@ -135,7 +153,10 @@ func unmarshalDict(p reflect.Value, dict map[string]*BObject) error {
 			}
 			valp := reflect.New(ft.Type)
 			dict, _ := fo.Dict()
-			unmarshalDict(valp, dict)
+			err := unmarshalDict(valp, dict)
+			if err != nil {
+				break
+			}
 			fv.Set(valp.Elem())
 		}
 	}
