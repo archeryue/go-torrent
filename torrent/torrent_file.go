@@ -5,13 +5,12 @@ import (
 )
 
 type TorrentFile struct {
-    Announce    string
-    InfoHash    [20]byte
-    PieceHashes [][20]byte
-    PieceLength int
-    Length      int
-    Name        string
-	//TODO
+	Announce string
+	InfoSHA  [20]byte
+	FileName string
+	FileLen  int
+	PieceLen int
+	PieceSHA [][20]byte
 }
 
 func ParseFile(r io.Reader) (*TorrentFile, error) {

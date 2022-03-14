@@ -1,4 +1,4 @@
-module github.com/archeryue/go-torrent/main
+module archeryue/go-torrent/main
 
 go 1.17
 

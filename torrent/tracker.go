@@ -9,6 +9,6 @@ type PeerInfo struct {
 	Port uint16
 }
 
-func FindPeers(tfile *TorrentFile) []PeerInfo {
+func FindPeers(tf *TorrentFile) []PeerInfo {
 	return nil
 }
