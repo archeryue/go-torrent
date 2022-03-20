@@ -28,11 +28,30 @@ type Team struct {
 	Member []User `bencode:"member"`
 }
 
+func TestMarshalBasic(t *testing.T) {
+	buf := new(bytes.Buffer)
+	str := "abc"
+	len := Marshal(buf, str)
+	assert.Equal(t, 5, len)
+	assert.Equal(t, "3:abc", buf.String())
+
+	buf.Reset()
+	val := 199
+	len = Marshal(buf, val)
+	assert.Equal(t, 5, len)
+	assert.Equal(t, "i199e", buf.String())
+}
+
 func TestUnmarshalList(t *testing.T) {
 	str := "li85ei90ei95ee"
 	l := &[]int{}
 	Unmarshal(bytes.NewBufferString(str), l)
 	assert.Equal(t, []int{85, 90, 95}, *l)
+
+	buf := new(bytes.Buffer)
+	length := Marshal(buf, l)
+	assert.Equal(t, len(str), length)
+	assert.Equal(t, str, buf.String())
 }
 
 func TestUnmarshalUser(t *testing.T) {
@@ -41,6 +60,12 @@ func TestUnmarshalUser(t *testing.T) {
 	Unmarshal(bytes.NewBufferString(str), u)
 	assert.Equal(t, "archer", u.Name)
 	assert.Equal(t, 29, u.Age)
+
+
+	buf := new(bytes.Buffer)
+	length := Marshal(buf, u)
+	assert.Equal(t, len(str), length)
+	assert.Equal(t, str, buf.String())
 }
 
 func TestUnmarshalRole(t *testing.T) {
@@ -50,6 +75,11 @@ func TestUnmarshalRole(t *testing.T) {
 	assert.Equal(t, 1, r.Id)
 	assert.Equal(t, "archer", r.Name)
 	assert.Equal(t, 29, r.Age)
+
+	buf := new(bytes.Buffer)
+	length := Marshal(buf, r)
+	assert.Equal(t, len(str), length)
+	assert.Equal(t, str, buf.String())
 }
 
 func TestUnmarshalScore(t *testing.T) {
@@ -59,6 +89,12 @@ func TestUnmarshalScore(t *testing.T) {
 	assert.Equal(t, "archer", s.Name)
 	assert.Equal(t, 29, s.Age)
 	assert.Equal(t, []int{80, 85, 90}, s.Value)
+
+
+	buf := new(bytes.Buffer)
+	length := Marshal(buf, s)
+	assert.Equal(t, len(str), length)
+	assert.Equal(t, str, buf.String())
 }
 
 func TestUnmarshalTeam(t *testing.T) {
@@ -67,4 +103,9 @@ func TestUnmarshalTeam(t *testing.T) {
 	Unmarshal(bytes.NewBufferString(str), team)
 	assert.Equal(t, "ace", team.Name)
 	assert.Equal(t, 2, team.Size)
+
+	buf := new(bytes.Buffer)
+	length := Marshal(buf, team)
+	assert.Equal(t, len(str), length)
+	assert.Equal(t, str, buf.String())
 }
