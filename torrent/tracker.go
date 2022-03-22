@@ -5,7 +5,7 @@ import (
 )
 
 type PeerInfo struct {
-	Ip net.IP
+	Ip   net.IP
 	Port uint16
 }
 

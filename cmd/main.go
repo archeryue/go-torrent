@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	//TODO: parse torrent file
+	//parse torrent file
 	file, err := os.Open(os.Args[1])
 	if err != nil {
 		fmt.Println("open file error")
@@ -18,12 +18,12 @@ func main() {
 	if err != nil {
 		fmt.Println("parse file error")
 	}
-	//TODO: connect tracker & find peers
+	//connect tracker & find peers
 	peers := torrent.FindPeers(tf)
 	if len(peers) == 0 {
 		fmt.Println("can not find peers")
 	}
-	//TODO: download from peers & make file
-	torrent.Download()
-	torrent.MakeFile()
+	//download from peers & make file
+	torrent.Download(tf, peers)
+	torrent.MakeFile(tf)
 }
