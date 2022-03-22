@@ -21,13 +21,15 @@ type rawFile struct {
 	info     rawInfo `bencode:"info"`
 }
 
+const SHALEN int = 20
+
 type TorrentFile struct {
 	Announce string
-	InfoSHA  [20]byte
+	InfoSHA  [SHALEN]byte
 	FileName string
 	FileLen  int
 	PieceLen int
-	PieceSHA [][20]byte
+	PieceSHA [][SHALEN]byte
 }
 
 func ParseFile(r io.Reader) (*TorrentFile, error) {
@@ -53,10 +55,10 @@ func ParseFile(r io.Reader) (*TorrentFile, error) {
 
 	// calculate pieces SHA
 	bys := []byte(raw.info.pieces)
-	cnt := len(bys) / 20
-	hashes := make([][20]byte, cnt)
+	cnt := len(bys) / SHALEN
+	hashes := make([][SHALEN]byte, cnt)
 	for i := 0; i < cnt; i++ {
-		copy(hashes[i][:], bys[i*20:(i+1)*20])
+		copy(hashes[i][:], bys[i*SHALEN:(i+1)*SHALEN])
 	}
 	ret.PieceSHA = hashes
 	return ret, nil
