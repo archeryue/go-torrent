@@ -192,7 +192,7 @@ func marshalList(w io.Writer, vl reflect.Value) int {
 func marshalDict(w io.Writer, vd reflect.Value) int {
 	len := 2
 	w.Write([]byte{'d'})
-	for i:=0; i < vd.NumField(); i++ {
+	for i := 0; i < vd.NumField(); i++ {
 		fv := vd.Field(i)
 		ft := vd.Type().Field(i)
 		len += EncodeString(w, strings.ToLower(ft.Name))

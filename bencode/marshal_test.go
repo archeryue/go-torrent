@@ -61,7 +61,6 @@ func TestUnmarshalUser(t *testing.T) {
 	assert.Equal(t, "archer", u.Name)
 	assert.Equal(t, 29, u.Age)
 
-
 	buf := new(bytes.Buffer)
 	length := Marshal(buf, u)
 	assert.Equal(t, len(str), length)
@@ -89,7 +88,6 @@ func TestUnmarshalScore(t *testing.T) {
 	assert.Equal(t, "archer", s.Name)
 	assert.Equal(t, 29, s.Age)
 	assert.Equal(t, []int{80, 85, 90}, s.Value)
-
 
 	buf := new(bytes.Buffer)
 	length := Marshal(buf, s)
