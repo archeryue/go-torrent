@@ -140,8 +140,8 @@ func unmarshalDict(p reflect.Value, dict map[string]*BObject) error {
 			}
 			list, _ := fo.List()
 			lp := reflect.New(ft.Type)
-			ll := reflect.MakeSlice(ft.Type, len(list), len(list))
-			lp.Elem().Set(ll)
+			ls := reflect.MakeSlice(ft.Type, len(list), len(list))
+			lp.Elem().Set(ls)
 			err := unmarshalList(lp, list)
 			if err != nil {
 				break
