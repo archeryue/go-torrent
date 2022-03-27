@@ -114,7 +114,7 @@ func unmarshalDict(p reflect.Value, dict map[string]*BObject) error {
 		}
 		ft := v.Type().Field(i)
 		key := ft.Tag.Get("bencode")
-		if len(key) == 0 {
+		if key == "" {
 			key = strings.ToLower(ft.Name)
 		}
 		fo := dict[key]
@@ -195,7 +195,11 @@ func marshalDict(w io.Writer, vd reflect.Value) int {
 	for i := 0; i < vd.NumField(); i++ {
 		fv := vd.Field(i)
 		ft := vd.Type().Field(i)
-		len += EncodeString(w, strings.ToLower(ft.Name))
+		key := ft.Tag.Get("bencode")
+		if key == "" {
+			key = strings.ToLower(ft.Name)
+		}
+		len += EncodeString(w, key)
 		len += marshalValue(w, fv)
 	}
 	w.Write([]byte{'e'})
