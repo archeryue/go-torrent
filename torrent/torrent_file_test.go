@@ -18,6 +18,7 @@ func TestParseFile(t *testing.T) {
 	assert.Equal(t, 396361728, tf.FileLen)
 	assert.Equal(t, 262144, tf.PieceLen)
 	assert.Equal(t, 1512, len(tf.PieceSHA))
-	var expectHASH = [20]byte{113, 156, 7, 79, 121, 140, 87, 203, 206, 138, 146, 212, 155, 195, 177, 215, 88, 122, 189, 170}
+	var expectHASH = [20]byte{0x71, 0x2c, 0xea, 0x2f, 0x4b, 0xd8, 0x85, 0xa, 0xfa,
+		0x19, 0xf9, 0x29, 0x45, 0xb0, 0xfa, 0xfe, 0x54, 0x97, 0xb9, 0x0e}
 	assert.Equal(t, expectHASH, tf.InfoSHA)
 }
