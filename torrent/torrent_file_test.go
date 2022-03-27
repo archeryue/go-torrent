@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseFile(t *testing.T) {
-	file, err := os.Open("file/debian-iso.torrent")
+	file, err := os.Open("../testfile/debian-iso.torrent")
 	assert.Equal(t, nil, err)
 	tf, err := ParseFile(bufio.NewReader(file))
 	assert.Equal(t, nil, err)
