@@ -10,8 +10,8 @@ import (
 )
 
 type rawInfo struct {
-	Name        string `bencode:"name"`
 	Length      int    `bencode:"length"`
+	Name        string `bencode:"name"`
 	PieceLength int    `bencode:"piece length"`
 	Pieces      string `bencode:"pieces"`
 }
