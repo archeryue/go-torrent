@@ -14,6 +14,7 @@ func main() {
 	if err != nil {
 		fmt.Println("open file error")
 	}
+	defer file.Close()
 	tf, err := torrent.ParseFile(bufio.NewReader(file))
 	if err != nil {
 		fmt.Println("parse file error")
