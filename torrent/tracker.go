@@ -1,7 +1,21 @@
 package torrent
 
 import (
+	"crypto/rand"
+	"encoding/binary"
+	"fmt"
 	"net"
+	"net/http"
+	"net/url"
+	"strconv"
+	"time"
+
+	"github.com/archeryue/go-torrent/bencode"
+)
+
+const (
+	PeerPort int = 6666
+	PeerSize int = 6 // 4 for IP, 2 for port
 )
 
 type PeerInfo struct {
@@ -9,6 +23,74 @@ type PeerInfo struct {
 	Port uint16
 }
 
+type TrackerResp struct {
+	Interval int    `bencode:"interval"`
+	Peers    string `bencode:"peers"`
+}
+
+func buildUrl(tf *TorrentFile) (string, error) {
+	var peerId [20]byte
+	_, err := rand.Read(peerId[:])
+	if err != nil {
+		return "", err
+	}
+
+	base, err := url.Parse(tf.Announce)
+	if err != nil {
+		fmt.Println("Announce Error: " + tf.Announce)
+		return "", err
+	}
+
+	params := url.Values{
+		"info_hash":  []string{string(tf.InfoSHA[:])},
+		"peer_id":    []string{string(peerId[:])},
+		"port":       []string{strconv.Itoa(PeerPort)},
+		"uploaded":   []string{"0"},
+		"downloaded": []string{"0"},
+		"compact":    []string{"1"},
+		"left":       []string{strconv.Itoa(tf.FileLen)},
+	}
+
+	base.RawQuery = params.Encode()
+	return base.String(), nil
+}
+
+func buildPeerInfo(peers []byte) []PeerInfo {
+	num := len(peers) / PeerSize
+	if len(peers)%PeerSize != 0 {
+		fmt.Println("Received malformed peers")
+		return nil
+	}
+	infos := make([]PeerInfo, num)
+	for i := 0; i < num; i++ {
+		offset := i * PeerSize
+		infos[i].Ip = net.IP(peers[offset : offset+4])
+		infos[i].Port = binary.BigEndian.Uint16(peers[offset+4 : offset+6])
+	}
+	return infos
+}
+
 func FindPeers(tf *TorrentFile) []PeerInfo {
-	return nil
+	url, err := buildUrl(tf)
+	if err != nil {
+		fmt.Println("Build Tracker Url Error: " + err.Error())
+		return nil
+	}
+
+	cli := &http.Client{Timeout: 15 * time.Second}
+	resp, err := cli.Get(url)
+	if err != nil {
+		fmt.Println("Fail to Connect to Tracker: " + err.Error())
+		return nil
+	}
+	defer resp.Body.Close()
+
+	trackResp := new(TrackerResp)
+	err = bencode.Unmarshal(resp.Body, trackResp)
+	if err != nil {
+		fmt.Println("Tracker Response Error" + err.Error())
+		return nil
+	}
+
+	return buildPeerInfo([]byte(trackResp.Peers))
 }
