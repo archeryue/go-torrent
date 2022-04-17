@@ -15,7 +15,9 @@ import (
 
 const (
 	PeerPort int = 6666
-	PeerSize int = 6 // 4 for IP, 2 for port
+	IpLen    int = 4
+	PortLen  int = 2
+	PeerLen  int = IpLen + PortLen
 )
 
 type PeerInfo struct {
@@ -56,16 +58,16 @@ func buildUrl(tf *TorrentFile) (string, error) {
 }
 
 func buildPeerInfo(peers []byte) []PeerInfo {
-	num := len(peers) / PeerSize
-	if len(peers)%PeerSize != 0 {
+	num := len(peers) / PeerLen
+	if len(peers)%PeerLen != 0 {
 		fmt.Println("Received malformed peers")
 		return nil
 	}
 	infos := make([]PeerInfo, num)
 	for i := 0; i < num; i++ {
-		offset := i * PeerSize
-		infos[i].Ip = net.IP(peers[offset : offset+4])
-		infos[i].Port = binary.BigEndian.Uint16(peers[offset+4 : offset+6])
+		offset := i * PeerLen
+		infos[i].Ip = net.IP(peers[offset : offset+IpLen])
+		infos[i].Port = binary.BigEndian.Uint16(peers[offset+IpLen : offset+PeerLen])
 	}
 	return infos
 }
