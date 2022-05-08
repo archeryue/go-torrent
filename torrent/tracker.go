@@ -1,7 +1,6 @@
 package torrent
 
 import (
-	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -30,13 +29,7 @@ type TrackerResp struct {
 	Peers    string `bencode:"peers"`
 }
 
-func buildUrl(tf *TorrentFile) (string, error) {
-	var peerId [20]byte
-	_, err := rand.Read(peerId[:])
-	if err != nil {
-		return "", err
-	}
-
+func buildUrl(tf *TorrentFile, peerId [20]byte) (string, error) {
 	base, err := url.Parse(tf.Announce)
 	if err != nil {
 		fmt.Println("Announce Error: " + tf.Announce)
@@ -72,8 +65,8 @@ func buildPeerInfo(peers []byte) []PeerInfo {
 	return infos
 }
 
-func FindPeers(tf *TorrentFile) []PeerInfo {
-	url, err := buildUrl(tf)
+func FindPeers(tf *TorrentFile, peerId [20]byte) []PeerInfo {
+	url, err := buildUrl(tf, peerId)
 	if err != nil {
 		fmt.Println("Build Tracker Url Error: " + err.Error())
 		return nil

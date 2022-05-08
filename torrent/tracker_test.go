@@ -2,6 +2,7 @@ package torrent
 
 import (
 	"bufio"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"testing"
@@ -11,7 +12,10 @@ func TestTracker(t *testing.T) {
 	file, _ := os.Open("../testfile/debian-iso.torrent")
 	tf, _ := ParseFile(bufio.NewReader(file))
 
-	peers := FindPeers(tf)
+	var peerId [20]byte
+	_, _ = rand.Read(peerId[:])
+
+	peers := FindPeers(tf, peerId)
 	for i, p := range peers {
 		fmt.Printf("Peer %d, Ip: %s, Port: %d\n", i, p.Ip, p.Port)
 	}
