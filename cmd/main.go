@@ -9,18 +9,6 @@ import (
 	"github.com/archeryue/go-torrent/torrent"
 )
 
-func buildTask(tf *torrent.TorrentFile, peerId [20]byte, peers []torrent.PeerInfo) *torrent.TorrentTask {
-	var task torrent.TorrentTask
-	task.PeerId = peerId
-	task.PeerList = peers
-	task.FileName = tf.FileName
-	task.FileLen = tf.FileLen
-	task.InfoSHA = tf.InfoSHA
-	task.PieceLen = tf.PieceLen
-	task.PieceSHA = tf.PieceSHA
-	return &task
-}
-
 func main() {
 	//parse torrent file
 	file, err := os.Open(os.Args[1])
@@ -59,5 +47,4 @@ func main() {
 	}
 	//download from peers & make file
 	torrent.Download(task)
-	torrent.MakeFile(task.FileName)
 }
