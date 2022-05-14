@@ -48,7 +48,15 @@ func main() {
 		return
 	}
 	// build torrent task
-	task := buildTask(tf, peerId, peers)
+	task := &torrent.TorrentTask{
+		PeerId:   peerId,
+		PeerList: peers,
+		InfoSHA:  tf.InfoSHA,
+		FileName: tf.FileName,
+		FileLen:  tf.FileLen,
+		PieceLen: tf.PieceLen,
+		PieceSHA: tf.PieceSHA,
+	}
 	//download from peers & make file
 	torrent.Download(task)
 	torrent.MakeFile(task.FileName)
