@@ -102,16 +102,18 @@ func (c *PeerConn) ReadMsg() (*PeerMsg, error) {
 	}, nil
 }
 
+const LenBytes uint32 = 4
+
 func (c *PeerConn) WriteMsg(m *PeerMsg) (int, error) {
 	var buf []byte
 	if m == nil {
-		buf = make([]byte, 4)
+		buf = make([]byte, LenBytes)
 	}
 	length := uint32(len(m.Payload) + 1) // +1 for id
-	buf = make([]byte, 4+length)
-	binary.BigEndian.PutUint32(buf[0:4], length)
-	buf[4] = byte(m.Id)
-	copy(buf[5:], m.Payload)
+	buf = make([]byte, LenBytes+length)
+	binary.BigEndian.PutUint32(buf[0:LenBytes], length)
+	buf[LenBytes] = byte(m.Id)
+	copy(buf[LenBytes+1:], m.Payload)
 	return c.Write(buf)
 }
 

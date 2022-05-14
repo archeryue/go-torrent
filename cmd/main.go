@@ -22,13 +22,9 @@ func main() {
 		fmt.Println("parse file error")
 		return
 	}
-	// generate peerId
+	// random peerId
 	var peerId [torrent.IDLEN]byte
-	_, err = rand.Read(peerId[:])
-	if err != nil {
-		fmt.Println("generate peerId error")
-		return
-	}
+	_, _ = rand.Read(peerId[:])
 	//connect tracker & find peers
 	peers := torrent.FindPeers(tf, peerId)
 	if len(peers) == 0 {
