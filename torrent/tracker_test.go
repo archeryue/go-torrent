@@ -12,7 +12,7 @@ func TestTracker(t *testing.T) {
 	file, _ := os.Open("../testfile/debian-iso.torrent")
 	tf, _ := ParseFile(bufio.NewReader(file))
 
-	var peerId [20]byte
+	var peerId [IDLEN]byte
 	_, _ = rand.Read(peerId[:])
 
 	peers := FindPeers(tf, peerId)

@@ -19,6 +19,8 @@ const (
 	PeerLen  int = IpLen + PortLen
 )
 
+const IDLEN int = 20
+
 type PeerInfo struct {
 	Ip   net.IP
 	Port uint16
@@ -29,7 +31,7 @@ type TrackerResp struct {
 	Peers    string `bencode:"peers"`
 }
 
-func buildUrl(tf *TorrentFile, peerId [20]byte) (string, error) {
+func buildUrl(tf *TorrentFile, peerId [IDLEN]byte) (string, error) {
 	base, err := url.Parse(tf.Announce)
 	if err != nil {
 		fmt.Println("Announce Error: " + tf.Announce)
@@ -65,7 +67,7 @@ func buildPeerInfo(peers []byte) []PeerInfo {
 	return infos
 }
 
-func FindPeers(tf *TorrentFile, peerId [20]byte) []PeerInfo {
+func FindPeers(tf *TorrentFile, peerId [IDLEN]byte) []PeerInfo {
 	url, err := buildUrl(tf, peerId)
 	if err != nil {
 		fmt.Println("Build Tracker Url Error: " + err.Error())

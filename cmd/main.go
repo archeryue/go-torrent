@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 	// generate peerId
-	var peerId [20]byte
+	var peerId [torrent.IDLEN]byte
 	_, err = rand.Read(peerId[:])
 	if err != nil {
 		fmt.Println("generate peerId error")
