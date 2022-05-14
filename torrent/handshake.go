@@ -5,13 +5,18 @@ import (
 	"io"
 )
 
+const (
+	Reserved int = 8
+	HsMsgLen int = SHALEN + IDLEN + Reserved
+)
+
 type HandshakeMsg struct {
 	PreStr  string
-	InfoSHA [20]byte
-	PeerId  [20]byte
+	InfoSHA [SHALEN]byte
+	PeerId  [IDLEN]byte
 }
 
-func NewHandShakeMsg(infoSHA, peerId [20]byte) *HandshakeMsg {
+func NewHandShakeMsg(infoSHA, peerId [IDLEN]byte) *HandshakeMsg {
 	return &HandshakeMsg{
 		PreStr:  "BitTorrent protocol",
 		InfoSHA: infoSHA,
@@ -20,11 +25,11 @@ func NewHandShakeMsg(infoSHA, peerId [20]byte) *HandshakeMsg {
 }
 
 func WriteHandShake(w io.Writer, msg *HandshakeMsg) (int, error) {
-	buf := make([]byte, len(msg.PreStr)+49)
+	buf := make([]byte, len(msg.PreStr)+HsMsgLen+1) // 1 byte for prelen
 	buf[0] = byte(len(msg.PreStr))
 	curr := 1
 	curr += copy(buf[curr:], []byte(msg.PreStr))
-	curr += copy(buf[curr:], make([]byte, 8)) // 8 reserved bytes
+	curr += copy(buf[curr:], make([]byte, Reserved))
 	curr += copy(buf[curr:], msg.InfoSHA[:])
 	curr += copy(buf[curr:], msg.PeerId[:])
 	return w.Write(buf)
@@ -43,7 +48,7 @@ func ReadHandshake(r io.Reader) (*HandshakeMsg, error) {
 		return nil, err
 	}
 
-	msgBuf := make([]byte, 48+prelen)
+	msgBuf := make([]byte, HsMsgLen+prelen)
 	_, err = io.ReadFull(r, msgBuf)
 	if err != nil {
 		return nil, err
@@ -52,8 +57,8 @@ func ReadHandshake(r io.Reader) (*HandshakeMsg, error) {
 	var peerId [IDLEN]byte
 	var infoSHA [SHALEN]byte
 
-	copy(infoSHA[:], msgBuf[prelen+8:prelen+8+20])
-	copy(peerId[:], msgBuf[prelen+8+20:])
+	copy(infoSHA[:], msgBuf[prelen+Reserved:prelen+Reserved+SHALEN])
+	copy(peerId[:], msgBuf[prelen+Reserved+SHALEN:])
 
 	return &HandshakeMsg{
 		PreStr:  string(msgBuf[0:prelen]),
