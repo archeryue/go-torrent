@@ -1,12 +1,22 @@
 package torrent
 
-func Download(tf *TorrentFile, peerId [20]byte, peers []PeerInfo) error {
+type TorrentTask struct {
+	PeerId		[20]byte
+	PeerList	[]PeerInfo
+	InfoSHA		[SHALEN]byte
+	FileName	string
+	FileLen		int
+	PieceLen	int
+	PieceSHA	[][SHALEN]byte
+}
+
+func Download(task *TorrentTask) error {
 	//TODO: check local tmp file
 	//TODO: download piceces and check
 	//TODO: write picece bytes into local tmp file
 	return nil
 }
 
-func MakeFile(tf *TorrentFile) {
+func MakeFile(name string) {
 	//TODO: assemble tmp to file
 }
