@@ -38,12 +38,41 @@ type pieceResult struct {
 const BLOCKSIZE = 16384
 const MAXBACKLOG = 5
 
-func (task *TorrentTask) peerRountine(peer PeerInfo, taskQueue chan *pieceTask, resultQueue chan *pieceResult) {
-
+func downloadPiece(conn *PeerConn, task *pieceTask) (*pieceResult, error) {
+	return &pieceResult{}, nil
 }
 
-func (t *TorrentTask) downloadPiece(conn *PeerConn, task *pieceTask) (*pieceResult, error) {
-	return &pieceResult{}, nil
+func checkPiece(task *pieceTask, res *pieceResult) bool {
+	return true
+}
+
+func (t *TorrentTask) peerRountine(peer PeerInfo, taskQueue chan *pieceTask, resultQueue chan *pieceResult) {
+	// set up conn with peer
+	conn, err := NewConn(peer, t.InfoSHA, t.PeerId)
+	if err != nil {
+		fmt.Println("fail to connect peer : " + peer.Ip.String())
+		return
+	}
+	fmt.Println("complete handshake with peer : " + peer.Ip.String())
+	defer conn.Close()
+	conn.WriteMsg(&PeerMsg{MsgInterested, nil})
+	// get piece task & download
+	for task := range taskQueue {
+		if !conn.Field.HasPiece(task.index) {
+			taskQueue <- task
+			continue
+		}
+		res, err := downloadPiece(conn, task)
+		if err != nil {
+			fmt.Println("fail to download piece" + err.Error())
+			return
+		}
+		if !checkPiece(task, res) {
+			taskQueue <- task
+			continue
+		}
+		resultQueue <- res
+	}
 }
 
 func (t *TorrentTask) getPieceBounds(index int) (bengin, end int) {
@@ -62,7 +91,7 @@ func Download(task *TorrentTask) error {
 	resultQueue := make(chan *pieceResult)
 	for index, sha := range task.PieceSHA {
 		begin, end := task.getPieceBounds(index)
-		taskQueue <- &pieceTask{index, sha, (begin-end)}
+		taskQueue <- &pieceTask{index, sha, (begin - end)}
 	}
 	// init goroutines for each peer
 	for _, peer := range task.PeerList {
@@ -72,7 +101,7 @@ func Download(task *TorrentTask) error {
 	buf := make([]byte, task.FileLen)
 	count := 0
 	for count < len(task.PieceSHA) {
-		res := <- resultQueue
+		res := <-resultQueue
 		begin, end := task.getPieceBounds(res.index)
 		copy(buf[begin:end], res.data)
 		count++
@@ -90,7 +119,7 @@ func Download(task *TorrentTask) error {
 	}
 	_, err = file.Write(buf)
 	if err != nil {
-		fmt.Println("fail to write data")	
+		fmt.Println("fail to write data")
 		return err
 	}
 	return nil
