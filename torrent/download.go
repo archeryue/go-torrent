@@ -1,8 +1,11 @@
 package torrent
 
 import (
+	"bytes"
+	"crypto/sha1"
 	"fmt"
 	"os"
+	"time"
 )
 
 type TorrentTask struct {
@@ -38,11 +41,80 @@ type pieceResult struct {
 const BLOCKSIZE = 16384
 const MAXBACKLOG = 5
 
+func (state *taskState) handleMsg() error {
+	msg, err := state.conn.ReadMsg()
+	if err != nil {
+		return err
+	}
+	// handle keep-alive
+	if msg == nil {
+		return nil
+	}
+	switch msg.Id {
+	case MsgChoke:
+		state.conn.Choked = true
+	case MsgUnchoke:
+		state.conn.Choked = false
+	case MsgHave:
+		index, err := GetHaveIndex(msg)
+		if err != nil {
+			return err
+		}
+		state.conn.Field.SetPiece(index)
+	case MsgPiece:
+		n, err := CopyPieceData(state.index, state.data, msg)
+		if err != nil {
+			return err
+		}
+		state.downloaded += n
+		state.backlog--
+	}
+	return nil
+}
+
 func downloadPiece(conn *PeerConn, task *pieceTask) (*pieceResult, error) {
-	return &pieceResult{}, nil
+	state := &taskState {
+		index: task.index,
+		conn: conn,
+		data: make([]byte, task.length),
+		requested: 0,
+		downloaded: 0,
+		backlog: 0,
+	}
+
+	conn.SetDeadline(time.Now().Add(30 * time.Second))
+	defer conn.SetDeadline(time.Time{})
+
+	for state.downloaded < task.length {
+		if !conn.Choked {
+			for state.backlog < MAXBACKLOG && state.requested < task.length {
+				size := BLOCKSIZE
+				if task.length - state.requested < size {
+					length := task.length - state.requested
+					msg := NewRequestMsg(state.index, state.requested, length)
+					_, err := state.conn.WriteMsg(msg)
+					if err != nil {
+						return nil, err
+					}
+					state.backlog++
+					state.requested += length
+				}
+			}
+		}
+		err := state.handleMsg()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &pieceResult{state.index, state.data}, nil
 }
 
 func checkPiece(task *pieceTask, res *pieceResult) bool {
+	sha := sha1.Sum(res.data)
+	if !bytes.Equal(task.sha[:], sha[:]) {
+		fmt.Printf("check integrity failed, index :%v\n", res.index)
+		return false
+	}
 	return true
 }
 
