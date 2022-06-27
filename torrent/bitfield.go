@@ -1,5 +1,7 @@
 package torrent
 
+import "strconv"
+
 type Bitfield []byte
 
 func (field Bitfield) HasPiece(index int) bool {
@@ -18,4 +20,14 @@ func (field Bitfield) SetPiece(index int) {
 		return
 	}
 	field[byteIndex] |= 1 << uint(7-offset)
+}
+
+func (field Bitfield) String() string {
+	str := "piece# "
+	for i := 0; i < len(field)*8; i++ {
+		if field.HasPiece(i) {
+			str = str + strconv.Itoa(i) + " "
+		}
+	}
+	return str
 }

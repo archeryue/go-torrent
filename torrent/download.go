@@ -73,32 +73,28 @@ func (state *taskState) handleMsg() error {
 }
 
 func downloadPiece(conn *PeerConn, task *pieceTask) (*pieceResult, error) {
-	state := &taskState {
+	state := &taskState{
 		index: task.index,
-		conn: conn,
-		data: make([]byte, task.length),
-		requested: 0,
-		downloaded: 0,
-		backlog: 0,
+		conn:  conn,
+		data:  make([]byte, task.length),
 	}
-
-	conn.SetDeadline(time.Now().Add(30 * time.Second))
+	conn.SetDeadline(time.Now().Add(15 * time.Second))
 	defer conn.SetDeadline(time.Time{})
 
 	for state.downloaded < task.length {
 		if !conn.Choked {
 			for state.backlog < MAXBACKLOG && state.requested < task.length {
-				size := BLOCKSIZE
-				if task.length - state.requested < size {
-					length := task.length - state.requested
-					msg := NewRequestMsg(state.index, state.requested, length)
-					_, err := state.conn.WriteMsg(msg)
-					if err != nil {
-						return nil, err
-					}
-					state.backlog++
-					state.requested += length
+				length := BLOCKSIZE
+				if task.length-state.requested < length {
+					length = task.length - state.requested
 				}
+				msg := NewRequestMsg(state.index, state.requested, length)
+				_, err := state.conn.WriteMsg(msg)
+				if err != nil {
+					return nil, err
+				}
+				state.backlog++
+				state.requested += length
 			}
 		}
 		err := state.handleMsg()
@@ -125,8 +121,9 @@ func (t *TorrentTask) peerRountine(peer PeerInfo, taskQueue chan *pieceTask, res
 		fmt.Println("fail to connect peer : " + peer.Ip.String())
 		return
 	}
-	fmt.Println("complete handshake with peer : " + peer.Ip.String())
 	defer conn.Close()
+
+	fmt.Println("complete handshake with peer : " + peer.Ip.String())
 	conn.WriteMsg(&PeerMsg{MsgInterested, nil})
 	// get piece task & download
 	for task := range taskQueue {
@@ -134,8 +131,10 @@ func (t *TorrentTask) peerRountine(peer PeerInfo, taskQueue chan *pieceTask, res
 			taskQueue <- task
 			continue
 		}
+		fmt.Printf("get task, index: %v, peer : %v\n", task.index, peer.Ip.String())
 		res, err := downloadPiece(conn, task)
 		if err != nil {
+			taskQueue <- task
 			fmt.Println("fail to download piece" + err.Error())
 			return
 		}
@@ -163,7 +162,7 @@ func Download(task *TorrentTask) error {
 	resultQueue := make(chan *pieceResult)
 	for index, sha := range task.PieceSHA {
 		begin, end := task.getPieceBounds(index)
-		taskQueue <- &pieceTask{index, sha, (begin - end)}
+		taskQueue <- &pieceTask{index, sha, (end - begin)}
 	}
 	// init goroutines for each peer
 	for _, peer := range task.PeerList {
@@ -179,7 +178,7 @@ func Download(task *TorrentTask) error {
 		count++
 		// print progress
 		percent := float64(count) / float64(len(task.PieceSHA)) * 100
-		fmt.Printf("downloading, progress : (%0.2f%%)", percent)
+		fmt.Printf("downloading, progress : (%0.2f%%)\n", percent)
 	}
 	close(taskQueue)
 	close(resultQueue)

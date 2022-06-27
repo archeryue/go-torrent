@@ -63,17 +63,20 @@ func handshake(conn net.Conn, infoSHA [SHALEN]byte, peerId [IDLEN]byte) error {
 }
 
 func fillBitfield(c *PeerConn) error {
-	c.SetDeadline(time.Now().Add(3 * time.Second))
+	c.SetDeadline(time.Now().Add(5 * time.Second))
 	defer c.SetDeadline(time.Time{})
+
 	msg, err := c.ReadMsg()
 	if err != nil {
-		fmt.Println("read peer msg failed")
 		return err
 	}
-	if msg == nil || msg.Id != MsgBitfield {
-		fmt.Println("peer msg type error")
-		return fmt.Errorf("expect bitfield")
+	if msg == nil {
+		return fmt.Errorf("expected bitfield")
 	}
+	if msg.Id != MsgBitfield {
+		return fmt.Errorf("expected bitfield, get " + strconv.Itoa(int(msg.Id)))
+	}
+	fmt.Println("fill bitfield : " + c.peer.Ip.String())
 	c.Field = msg.Payload
 	return nil
 }
@@ -92,7 +95,7 @@ func (c *PeerConn) ReadMsg() (*PeerMsg, error) {
 	}
 	// read msg body
 	msgBuf := make([]byte, length)
-	_, err = io.ReadFull(c, lenBuf)
+	_, err = io.ReadFull(c, msgBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +174,7 @@ func NewConn(peer PeerInfo, infoSHA [SHALEN]byte, peerId [IDLEN]byte) (*PeerConn
 	err = handshake(conn, infoSHA, peerId)
 	if err != nil {
 		fmt.Println("handshake failed")
+		conn.Close()
 		return nil, err
 	}
 	c := &PeerConn{
@@ -183,7 +187,7 @@ func NewConn(peer PeerInfo, infoSHA [SHALEN]byte, peerId [IDLEN]byte) (*PeerConn
 	// fill bitfield
 	err = fillBitfield(c)
 	if err != nil {
-		fmt.Println("fill bitfield failed")
+		fmt.Println("fill bitfield failed, " + err.Error())
 		return nil, err
 	}
 	return c, nil
