@@ -114,7 +114,7 @@ func checkPiece(task *pieceTask, res *pieceResult) bool {
 	return true
 }
 
-func (t *TorrentTask) peerRountine(peer PeerInfo, taskQueue chan *pieceTask, resultQueue chan *pieceResult) {
+func (t *TorrentTask) peerRoutine(peer PeerInfo, taskQueue chan *pieceTask, resultQueue chan *pieceResult) {
 	// set up conn with peer
 	conn, err := NewConn(peer, t.InfoSHA, t.PeerId)
 	if err != nil {
@@ -166,7 +166,7 @@ func Download(task *TorrentTask) error {
 	}
 	// init goroutines for each peer
 	for _, peer := range task.PeerList {
-		go task.peerRountine(peer, taskQueue, resultQueue)
+		go task.peerRoutine(peer, taskQueue, resultQueue)
 	}
 	// collect piece result
 	buf := make([]byte, task.FileLen)

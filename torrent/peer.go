@@ -154,7 +154,7 @@ func GetHaveIndex(msg *PeerMsg) (int, error) {
 	return index, nil
 }
 
-func NewRequestMsg(index, offset, length int) (*PeerMsg) {
+func NewRequestMsg(index, offset, length int) *PeerMsg {
 	payload := make([]byte, 12)
 	binary.BigEndian.PutUint32(payload[0:4], uint32(index))
 	binary.BigEndian.PutUint32(payload[4:8], uint32(offset))
